@@ -22,9 +22,9 @@ MultiNest can be downloaded from the files section of [this website](http://ccpf
  
 If you use MultiNest, please acknowledge the following MultiNest papers:
 
-[arXiv:0809.3437](http://xxx.lanl.gov/abs/0809.3437)
-[arXiv:0704.3704](http://xxx.lanl.gov/abs/0704.3704)
-[arXiv:1306.2144](http://xxx.lanl.gov/abs/1306.2144)
+* [arXiv:0809.3437](http://xxx.lanl.gov/abs/0809.3437)
+* [arXiv:0704.3704](http://xxx.lanl.gov/abs/0704.3704)
+* [arXiv:1306.2144](http://xxx.lanl.gov/abs/1306.2144)
  
  
 
