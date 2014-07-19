@@ -48,10 +48,13 @@ Read the MultiNest README file for more details.
 Plotting & Visualisation
 ------------------------
 
-* **GetDist:** Output files produced by MultiNest are compatible with GetDist? plotting package which is part of CosmoMC.
-* **SuperPlot:** written by Andrew Fowlie, can calculate and plot posterior distributions, profile likelihoods, 
+* [**GetDist:**](http://cosmologist.info/cosmomc/readme.html)
+  Output files produced by MultiNest are compatible with GetDist? plotting package which is part of CosmoMC.
+* [**SuperPlot:**](https://github.com/innisfree/superpy/tree/master/SuperPlot)
+  written by Andrew Fowlie, can calculate and plot posterior distributions, profile likelihoods, 
            confidence intervals, credible regions etc. from MultiNest output files.
-* **PyMultiNest:** has support for analysing the output from MultiNest & monitoring the progress.
+* [**PyMultiNest:**](https://github.com/JohannesBuchner/PyMultiNest) 
+  has support for analysing the output from MultiNest & monitoring the progress.
  
 
 Packages Using MultiNest
