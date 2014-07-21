@@ -4,6 +4,24 @@ CXX = icpc -lmpi
 FFLAGS += -O3 -DMPI
 CFLAGS += -O3 -DMPI
 
+FC = gfortran
+#FCPATH = 
+CC = gcc
+CXX = g++
+FFLAGS += -I. -O3 -w -Wno-unused-parameter -fPIC -ffree-line-length-none
+CFLAGS += -I. -O3 -std=c99 -Wall -Wextra -Wno-unused-parameter -fPIC
+
+ifndef WITHOUT_MPI
+# compiling with MPI support. You can disable this with
+# $ make WITHOUT_MPI=1
+FC = mpif90
+CC = mpicc
+CXX = mpic++
+FFLAGS += -DMPI -lmpi #-f90=${FCPATH}
+CFLAGS += -DMPI
+endif
+
+
 LAPACKLIB = -llapack
 
 NESTLIBDIR = ./
