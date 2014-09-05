@@ -69,8 +69,9 @@ contains
 	
 	INTERFACE
 		!the user dumper function
-    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass)
+    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
 			integer nSamples, nlive, nPar, context_pass
+			logical ending
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
@@ -270,8 +271,9 @@ contains
 	
 	INTERFACE
 		!the user dumper function
-    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass)
+    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
 			integer nSamples, nlive, nPar, context_pass
+			logical ending
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
@@ -404,8 +406,9 @@ contains
 	
 	INTERFACE
 		!the user dumper function
-    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass)
+    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
 			integer nSamples, nlive, nPar, context_pass
+			logical ending
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
@@ -736,8 +739,9 @@ contains
 	
 	INTERFACE
 		!the user dumper function
-    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass)
+    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
 			integer nSamples, nlive, nPar, context_pass
+			logical ending
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
@@ -1120,11 +1124,11 @@ contains
 				endif
 				
 				!fback
-                		if(fback) call gfeedback(gZ,IS,IS_Z,numlike,globff,.false.)
+                		if(fback) call gfeedback(maxIter,gZ,IS,IS_Z,numlike,globff,.false.)
 				
 				call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar,multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n), &
 				ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n),ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive), &
-				l(1:nlive),evDataAll,IS,IS_Z,dumper,context)
+				l(1:nlive),evDataAll,IS,IS_Z,dumper,context,.true.)
 				
 				!if done then add in the contribution to the global evidence from live points
 				j=0
@@ -2499,7 +2503,7 @@ contains
 					
 					if(mod(sff,updInt*10)==0 .or. ic_done(0)) call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar, &
 					multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n),ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n), &
-					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context)
+					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context,.false.)
 				endif
 			endif
 			
@@ -2548,7 +2552,7 @@ contains
 						IS_Z(2) = sqrt(exp(IS_Z(2)-2d0*IS_Z(1)) - 1d0/IS_counter(1))
 					endif
 					
-					call gfeedback(gZ,IS,IS_Z,numlike,globff,.false.)
+					call gfeedback(ff,gZ,IS,IS_Z,numlike,globff,.false.)
 				
 					if(debug) then
 						d1=0.d0
@@ -2789,10 +2793,11 @@ contains
 !----------------------------------------------------------------------
    
    !provide fback to the user
-  subroutine gfeedback(logZ,IS,IS_Z,nlike,nacc,dswitch)
+  subroutine gfeedback(iter,logZ,IS,IS_Z,nlike,nacc,dswitch)
     
 	implicit none
     	!input variables
+    	integer iter ! current MultiNest iteration
     	double precision logZ !log-evidence
 	logical IS !importance sampling being done?
 	double precision IS_Z(2) !importance sampling log-evidence & its standard deviation
@@ -2800,7 +2805,8 @@ contains
     	integer nacc !no. of accepted samples
 	logical dswitch !dynamic live points
     
-    	write(*,'(a,F14.6)')	     'Acceptance Rate:                  ',dble(nacc)/dble(nlike)
+	write(*,'(a,I14)')	         'Iteration:                        ',iter
+    write(*,'(a,F14.6)')	     'Acceptance Rate:                  ',dble(nacc)/dble(nlike)
 	write(*,'(a,i14)')   	     'Replacements:                     ',nacc
 	write(*,'(a,i14)')   	     'Total Samples:                    ',nlike
 	write(*,'(a,F14.6)')	     'Nested Sampling ln(Z):            ',logZ

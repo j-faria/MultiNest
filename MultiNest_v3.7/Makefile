@@ -1,11 +1,10 @@
 FC = ifort -lmpi
 CC = icc -lmpi
 CXX = icpc -lmpi
-FFLAGS += -O3 -DMPI
-CFLAGS += -O3 -DMPI
+FFLAGS += -O3
+CFLAGS += -O3
 
 FC = gfortran
-#FCPATH = 
 CC = gcc
 CXX = g++
 FFLAGS += -I. -O3 -w -Wno-unused-parameter -fPIC -ffree-line-length-none
@@ -17,7 +16,7 @@ ifndef WITHOUT_MPI
 FC = mpif90
 CC = mpicc
 CXX = mpic++
-FFLAGS += -DMPI -lmpi #-f90=${FCPATH}
+FFLAGS += -DMPI -lmpi -f90=${FCPATH}
 CFLAGS += -DMPI
 endif
 
