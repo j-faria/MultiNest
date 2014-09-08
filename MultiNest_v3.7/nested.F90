@@ -664,6 +664,7 @@ contains
 	double precision gZOld !global evidence & info
 	logical eswitch,peswitch,cSwitch !whether to do ellipsoidal sampling or not
 	logical remFlag, acpt, flag, flag2
+	logical nest_ended ! MultiNest is ending on this iteration
 	integer funit1, funit2 !file units
 	character(len=100) fName1, fName2 !file names
 	character(len=100) fmt,fmt1
@@ -1077,7 +1078,7 @@ contains
 #endif
 		
 	do ff=1,maxIter
-
+		nest_ended = .false.
 #ifdef MPI
     		call MPI_BARRIER(MPI_COMM_WORLD,errcode)
     		call MPI_BCAST(ic_done(0:ic_n),ic_n+1,MPI_LOGICAL,0,MPI_COMM_WORLD,errcode)
@@ -1124,7 +1125,7 @@ contains
 				endif
 				
 				!fback
-                		if(fback) call gfeedback(maxIter,gZ,IS,IS_Z,numlike,globff,.false.)
+                if(fback) call gfeedback(maxIter,gZ,IS,IS_Z,numlike,globff,.false.)
 				
 				call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar,multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n), &
 				ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n),ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive), &
@@ -2323,8 +2324,8 @@ contains
 					d1=lowlike+log(h)
 	      				gZ=LogSumExp(gZ,d1)
 	      				ic_Z(nd)=LogSumExp(ic_Z(nd),d1)
-!					ic_info(nd)=exp(d1-ic_Z(nd))*lowlike+exp(gZold-ic_Z(nd))* &
-!					(ic_info(nd)+gZold)-ic_Z(nd)
+					!ic_info(nd)=exp(d1-ic_Z(nd))*lowlike+exp(gZold-ic_Z(nd))* &
+					!(ic_info(nd)+gZold)-ic_Z(nd)
 					ginfo=ginfo*exp(gzold-gz)+exp(d1-gz)*lowlike
 					ic_info(nd)=ic_info(nd)*exp(ic_zold(nd)-ic_z(nd))+exp(d1-ic_z(nd))*lowlike
 		
@@ -2339,6 +2340,10 @@ contains
 				
 					if(abs(lowlike-ic_hilike(nd))<= 0.0001 .or. (ic_inc(nd)<log(tol) .and. &
 					globff-nlive>50) .or. ff==maxIter) then
+						if (ff==maxIter) then
+							nest_ended = .true.
+							print *, 'Ending because of maxIter limit'
+						end if
 						ic_done(nd)=.true.
 							
 						!check if all done
@@ -2503,7 +2508,7 @@ contains
 					
 					if(mod(sff,updInt*10)==0 .or. ic_done(0)) call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar, &
 					multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n),ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n), &
-					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context,.false.)
+					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context,nest_ended)
 				endif
 			endif
 			
