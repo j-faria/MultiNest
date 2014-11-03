@@ -1,6 +1,7 @@
 module priors
 
       use utils1
+      private betain, xinbta, dierfc
 
 contains
 
@@ -159,6 +160,25 @@ function LogNormalPrior(r,a,sigma)
 
 end function LogNormalPrior
 
+!=======================================================================
+
+! Uniform[0:1]  ->  Beta[a,b]
+
+function BetaPrior(r,a,b)
+
+            implicit none
+
+            double precision r, a, b, BetaPrior
+            double precision beta_log
+            integer ifault
+
+            beta_log = lgamma(a) + lgamma(b) - lgamma(a+b)
+            BetaPrior = xinbta(a, b, beta_log, r, ifault )
+            if (ifault /= 0) print *, ifault
+
+end function BetaPrior
+
+
 !=======================================================================       
 ! Inverse of complimentary error function in double precision
 
@@ -179,15 +199,15 @@ function dierfc(y)
             q2=1.50689047360223d-01, &
             q3=2.69999308670029d-01, &
             q4=-7.28846765585675d-02)
-            parameter (pa=3.97886080735226000d+00, &
+            parameter (pa=3.97886080735226000d0, &
             pb=1.20782237635245222d-01, &
             p0=2.44044510593190935d-01, &
             p1=4.34397492331430115d-01, &
             p2=6.86265948274097816d-01, &
             p3=9.56464974744799006d-01, &
-            p4=1.16374581931560831d+00, &
-            p5=1.21448730779995237d+00, &
-            p6=1.05375024970847138d+00, &
+            p4=1.16374581931560831d0, &
+            p5=1.21448730779995237d0, &
+            p6=1.05375024970847138d0, &
             p7=7.13657635868730364d-01, &
             p8=3.16847638520135944d-01, &
             p9=1.47297938331485121d-02, &
@@ -226,5 +246,305 @@ function dierfc(y)
       
 end function dierfc
 
-!=======================================================================
+
+
+function betain ( x, p, q, beta, ifault )
+    ! BETAIN computes the incomplete Beta function ratio.
+    !  Author: Original FORTRAN77 version by KL Majumder, GP Bhattacharjee.
+    !          FORTRAN90 version by John Burkardt.
+    !
+    !  Parameters:
+    !
+    !    Input, real (kind=8) X, the argument, between 0 and 1.
+    !    Input, real (kind=8) P, Q, the parameters, which must be positive.
+    !    Input, real (kind=8) BETA, the logarithm of the complete beta function.
+    !    Output, integer ( kind = 4 ) IFAULT, error flag. 0, no error.
+    !    Output, real (kind=8) BETAIN, the value of the incomplete Beta function ratio.
+  implicit none
+
+  real (kind=8), parameter :: acu = 0.1D-14
+  real (kind=8) ai, beta, betain, cx
+  integer ( kind = 4 ) ifault, ns
+  logical indx
+  real (kind=8) p, pp, psq, q, qq, rx, temp, term, x, xx
+
+  betain = x
+  ifault = 0
+
+  !  Check the input arguments.
+  if ( p <= 0.0d0 ) then
+    ifault = 1
+    return
+  end if
+
+  if ( q <= 0.0d0 ) then
+    ifault = 1
+    return
+  end if
+
+  if ( x < 0.0d0 .or. 1.0d0 < x ) then
+    ifault = 2
+    return
+  end if
+
+  !  Special cases.
+  if ( x == 0.0d0 .or. x == 1.0d0 ) then
+    return
+  end if
+
+  !  Change tail if necessary and determine S.
+  psq = p + q
+  cx = 1.0d0 - x
+
+  if ( p < psq * x ) then
+    xx = cx
+    cx = x
+    pp = q
+    qq = p
+    indx = .true.
+  else
+    xx = x
+    pp = p
+    qq = q
+    indx = .false.
+  end if
+
+  term = 1.0d0
+  ai = 1.0d0
+  betain = 1.0d0
+  ns = int ( qq + cx * psq )
+
+  !  Use Soper's reduction formula.
+  rx = xx / cx
+  temp = qq - ai
+  if ( ns == 0 ) then
+    rx = xx
+  end if
+
+  do
+    term = term * temp * rx / ( pp + ai )
+    betain = betain + term
+    temp = abs ( term )
+
+    if ( temp <= acu .and. temp <= acu * betain ) then
+      betain = betain * exp ( pp * log ( xx ) + ( qq - 1.0d0 ) * log ( cx ) - beta ) / pp
+
+      if ( indx ) then
+        betain = 1.0d0 - betain
+      end if
+      exit
+    end if
+
+    ai = ai + 1.0d0
+    ns = ns - 1
+
+    if ( 0 <= ns ) then
+      temp = qq - ai
+      if ( ns == 0 ) then
+        rx = xx
+      end if
+    else
+      temp = psq
+      psq = psq + 1.0d0
+    end if
+
+  end do
+
+  return
+end function betain
+
+function xinbta ( p, q, beta, alpha, ifault )
+    !  XINBTA computes the inverse of the incomplete Beta function.
+    !
+    !  Author: Original FORTRAN77 version by GW Cran, KJ Martin, GE Thomas.
+    !           FORTRAN90 version by John Burkardt.
+    !
+    !  Parameters:
+    !
+    !    Input, real (kind=8) P, Q, the parameters of the incomplete Beta function.
+    !
+    !    Input, real (kind=8) BETA, the logarithm of the value of the complete Beta function.
+    !
+    !    Input, real (kind=8) ALPHA, the value of the incomplete Beta function.  
+    !                         0 <= ALPHA <= 1.
+    !
+    !    Output, integer ( kind = 4 ) IFAULT, error flag. 0, no error occurred.
+    !
+    !    Output, real (kind=8) XINBTA, the argument of the incomplete Beta function 
+    !                                  which produces the value ALPHA.
+    !
+    !  Local Parameters:
+    !
+    !    Local, real (kind=8) SAE, requests an accuracy of about 10^SAE.
+  implicit none
+
+  real (kind=8) a, acu, adj, alpha, beta, fpu, g, h
+  integer ( kind = 4 ) iex
+  integer ( kind = 4 ) ifault
+  logical indx
+  real (kind=8) p, pp, prev, q, qq, r, s
+  real (kind=8), parameter :: sae = -30.0d0
+  real (kind=8) sq, t, tx, w, value, xin, xinbta, y, yprev
+
+  fpu = 10.0d0 ** sae
+
+  ifault = 0
+  value = alpha
+
+  !  Test for admissibility of parameters.
+  if ( p <= 0.0d0 ) then
+    ifault = 1
+    stop 1
+  end if
+
+  if ( q <= 0.0d0 ) then
+    ifault = 1
+    stop 1
+  end if
+
+  if ( alpha < 0.0d0 .or. 1.0d0 < alpha ) then
+    ifault = 2
+    stop 1
+  end if
+
+  !  Return immediately if the answer is easy to determine.  
+  if ( alpha == 0.0d0 ) then
+    value = 0.0d0
+    xinbta = value
+    return
+  end if
+
+  if ( alpha == 1.0d0 ) then
+    value = 1.0d0
+    xinbta = value
+    return
+  end if
+
+  !  Change tail if necessary.
+  if ( 0.5d0 < alpha ) then
+    a = 1.0d0 - alpha
+    pp = q
+    qq = p
+    indx = .true.
+  else
+    a = alpha
+    pp = p
+    qq = q
+    indx = .false.
+  end if
+
+  !  Calculate the initial approximation.
+  r = sqrt ( - log ( a * a ) )
+
+  y = r - ( 2.30753d0 + 0.27061d0 * r ) / ( 1.0d0 + ( 0.99229d0 + 0.04481d0 * r ) * r )
+
+  if ( 1.0d0 < pp .and. 1.0d0 < qq ) then
+    r = ( y * y - 3.0d0 ) / 6.0d0
+    s = 1.0d0 / ( pp + pp - 1.0d0 )
+    t = 1.0d0 / ( qq + qq - 1.0d0 )
+    h = 2.0d0 / ( s + t )
+    w = y * sqrt ( h + r ) / h - ( t - s ) * ( r + 5.0d0 / 6.0d0 - 2.0d0 / ( 3.0d0 * h ) )
+    value = pp / ( pp + qq * exp ( w + w ) )
+  else
+    r = qq + qq
+    t = 1.0d0 / ( 9.0d0 * qq )
+    t = r * ( 1.0d0 - t + y * sqrt ( t ) ) ** 3
+
+    if ( t <= 0.0d0 ) then
+      value = 1.0d0 - exp ( ( log ( ( 1.0d0 - a ) * qq ) + beta ) / qq )
+    else
+      t = ( 4.0d0 * pp + r - 2.0d0 ) / t
+      if ( t <= 1.0d0 ) then
+        value = exp ( ( log ( a * pp ) + beta ) / pp )
+      else
+        value = 1.0d0 - 2.0d0 / ( t + 1.0d0 )
+      end if
+    end if
+  end if
+
+  !  Solve for X by a modified Newton-Raphson method, using the function BETAIN.
+  r = 1.0d0 - pp
+  t = 1.0d0 - qq
+  yprev = 0.0d0
+  sq = 1.0d0
+  prev = 1.0d0
+
+  if ( value < 0.0001d0 ) then
+    value = 0.0001d0
+  end if
+
+  if ( 0.9999d0 < value ) then
+    value = 0.9999d0
+  end if
+
+  iex = max ( - 5.0d0 / pp / pp - 1.0d0 / a ** 0.2d0 - 13.0d0, sae )
+
+  acu = 10.0d0 ** iex
+
+  !  Iteration loop.
+  do
+    y = betain ( value, pp, qq, beta, ifault )
+    if ( ifault /= 0 ) then
+      write ( *, '(a,i6)' ) '  BETAIN returned IFAULT = ', ifault
+      stop 1
+    end if
+
+    xin = value
+    y = ( y - a ) * exp ( beta + r * log ( xin ) + t * log ( 1.0d0 - xin ) )
+
+    if ( y * yprev <= 0.0d0 ) then
+      prev = max ( sq, fpu )
+    end if
+
+    g = 1.0d0
+
+    do
+    !  Choose damping factor.
+      do
+        adj = g * y
+        sq = adj * adj
+        if ( sq < prev ) then
+          tx = value - adj
+          if ( 0.0d0 <= tx .and. tx <= 1.0d0 ) then
+            exit
+          end if
+        end if
+        g = g / 3.0d0
+      end do
+
+    !  Check whether current estimate is acceptable.
+    !  The change "VALUE = TX" was suggested by Ivan Ukhov.
+      if ( prev <= acu .or. y * y <= acu ) then
+        value = tx
+        if ( indx ) then
+          value= 1.0d0 - value
+        end if
+        xinbta = value
+        return
+      end if
+      if ( tx /= 0.0d0 .and. tx /= 1.0d0 ) then
+        exit
+      end if
+      g = g / 3.0d0
+    end do
+
+    if ( tx == value ) then
+      exit
+    end if
+
+    value = tx
+    yprev = y
+
+  end do
+
+  if ( indx ) then
+    value = 1.0d0 - value
+  end if
+
+  xinbta = value
+
+  return
+end function xinbta
+
+!===========================================================)============
 end module priors
