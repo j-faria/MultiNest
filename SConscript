@@ -1,14 +1,15 @@
 import os
 import commands
 
-
 MN_version_dir = 'MultiNest_v3.7/'
+
 
 # compiling with MPI support?
 out = commands.getstatusoutput('mpirun --version')
 if out[0] == 0:
 	MPI = True
 else:
+	MPI = False
 	print 'Compiling MultiNest without MPI'
 
 
@@ -32,8 +33,18 @@ env = env.Clone(tools=['gfortran'],
 	            # LINKFLAGS='-g',
 	            F90FLAGS=FFLAGS,
 	            FORTRANMODDIRPREFIX = '-J',  # option used by gfortran to specify where to put .mod files for compiled modules
-	            FORTRANMODDIR = MN_version_dir,
+	            FORTRANMODDIR = MN_version_dir
 	            )
+
+if GetOption('gfortran') is None:
+	pass
+else:
+	if MPI:
+		env['F90FLAGS'] += ' -f90=' + GetOption('gfortran')
+		# print env['F90FLAGS']
+	else:
+		env['F90'] = GetOption('gfortran')
+		# print env['F90']
 
 # if ARGUMENTS.get('VERBOSE') != '1':
 #     env['F90COMSTR'] = "Compiling $TARGET"
