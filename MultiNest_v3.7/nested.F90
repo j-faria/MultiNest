@@ -31,7 +31,7 @@ module Nested
   integer numlike,globff
   double precision logZero
   integer maxIter
-  logical fback,resumeFlag,dlive,genLive,dino
+  logical fback,lplot,resumeFlag,dlive,genLive,dino
   !output files name
   character(LEN=100)physname,broot,rname,resumename,livename,evname,IS_Files(3)
   !output file units
@@ -48,14 +48,14 @@ module Nested
 contains
   
   subroutine nestRun(nest_IS,nest_mmodal,nest_ceff,nest_nlive,nest_tol,nest_ef,nest_ndims,nest_totPar,nest_nCdims,maxClst, &
-  nest_updInt,nest_Ztol,nest_root,seed,nest_pWrap,nest_fb,nest_resume,nest_outfile,initMPI,nest_logZero,nest_maxIter, &
-  loglike,dumper,context)
+  nest_updInt,nest_Ztol,nest_root,seed,nest_pWrap,nest_fb,nest_liveplot,nest_resume,nest_outfile,initMPI,nest_logZero,nest_maxIter, &
+  loglike,dumper,live_plot,context)
         
   	implicit none
         
 	integer nest_ndims,nest_nlive,nest_updInt,context,seed,i
 	integer maxClst,nest_nsc,nest_totPar,nest_nCdims,nest_pWrap(*),nest_maxIter
-	logical nest_IS,nest_mmodal,nest_fb,nest_resume,nest_ceff,nest_outfile,initMPI
+	logical nest_IS,nest_mmodal,nest_fb,nest_liveplot,nest_resume,nest_ceff,nest_outfile,initMPI
 	character(LEN=100) nest_root
 	double precision nest_tol,nest_ef,nest_Ztol,nest_logZero
 	
@@ -75,6 +75,15 @@ contains
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
+	end INTERFACE
+
+	INTERFACE
+		!the live plotting routine
+		subroutine live_plot(nPar, nLpt, phyP, l)
+			integer nPar !total no. of parameters to save
+			integer nLpt !no. of live points
+			double precision phyP(nPar,nLpt), l(nLpt)
+		end subroutine live_plot
 	end INTERFACE
 	
 #ifdef MPI
@@ -128,6 +137,7 @@ contains
       		broot=nest_root
       		rname = trim(broot)
       		fback = nest_fb
+      		lplot = nest_liveplot
 		
       		!output file info
       		!setup the output files
@@ -236,7 +246,7 @@ contains
 		endif
 	endif
 	
-	call Nestsample(loglike, dumper, context)
+	call Nestsample(loglike, dumper, live_plot, context)
 	deallocate(pWrap)
       	call killRandomNS()
 #ifdef MPI
@@ -247,7 +257,7 @@ contains
 
 !----------------------------------------------------------------------
 
-  subroutine Nestsample(loglike, dumper, context)
+  subroutine Nestsample(loglike, dumper, live_plot, context)
 	
 	implicit none
 	
@@ -277,6 +287,15 @@ contains
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
+	end INTERFACE
+
+	INTERFACE
+		!the live plotting routine
+		subroutine live_plot(nPar, nLpt, phyP, l)
+			integer nPar !total no. of parameters to save
+			integer nLpt !no. of live points
+			double precision phyP(nPar,nLpt), l(nLpt)
+		end subroutine live_plot
 	end INTERFACE
 	
 	
@@ -363,7 +382,7 @@ contains
 	call MPI_BARRIER(MPI_COMM_WORLD,errcode)
 #endif
 	
-	if( .not.bogus ) call clusteredNest(p,phyP,l,loglike,dumper,context)
+	if( .not.bogus ) call clusteredNest(p,phyP,l,loglike,dumper,live_plot,context)
 	
 	if( my_rank==0 ) then
 		if( .not.bogus ) then
@@ -639,7 +658,7 @@ contains
 
 !----------------------------------------------------------------------
   
-  subroutine clusteredNest(p,phyP,l,loglike,dumper,context)
+  subroutine clusteredNest(p,phyP,l,loglike,dumper,live_plot,context)
   	
 	implicit none
 	
@@ -740,12 +759,21 @@ contains
 	
 	INTERFACE
 		!the user dumper function
-    		subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
+    	subroutine dumper(nSamples, nlive, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context_pass, ending)
 			integer nSamples, nlive, nPar, context_pass
 			logical ending
 			double precision, pointer :: physLive(:,:), posterior(:,:), paramConstr(:)
 			double precision maxLogLike, logZ, INSlogZ, logZerr
 		end subroutine dumper
+	end INTERFACE
+
+	INTERFACE
+		!the live plotting routine
+		subroutine live_plot(nPar, nLpt, phyP, l)
+			integer nPar !total no. of parameters to save
+			integer nLpt !no. of live points
+			double precision phyP(nPar,nLpt), l(nLpt)
+		end subroutine live_plot
 	end INTERFACE
 	
 	
@@ -2559,6 +2587,9 @@ contains
 					
 					call gfeedback(ff,gZ,IS,IS_Z,numlike,globff,.false.)
 				
+					! live plots
+					if (lplot) call live_plot(ndims, nlive, phyP(:,1:nlive), l(1:nlive))
+
 					if(debug) then
 						d1=0.d0
 						d2=0.d0
