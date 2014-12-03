@@ -3,7 +3,7 @@ import commands
 import sys
 
 Import('MPI')
-Import('mpif90_exec')
+if MPI: Import('mpif90_exec')
 
 lib_prefix = "/usr/local"
 MN_version_dir = 'MultiNest_v3.7/'
