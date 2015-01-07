@@ -81,7 +81,7 @@ function JeffreysPrior(r, x1, x2)
 end function JeffreysPrior
 
 !=======================================================================
-! Uniform[0:1]  ->  Mod. Jeffreys[x1:x2]
+! Uniform[0:1]  ->  Mod. Jeffreys[0:x2] with break at x1
 function ModJeffreysPrior(r, x1, x2)
 
             implicit none

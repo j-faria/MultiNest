@@ -2500,39 +2500,39 @@ contains
 					endif
 					
 					!check if the parameters are close the prior edges
-					if( .not.ic_done(0) .and. prior_warning .and. mod(ff,50)== 0 ) then
-						flag = .false.
-						k=0
-						do i=1,ic_n
-							if( ic_npt(i) == 0 .or. ic_done(i) ) cycle
-								
-							ic_mean(i,1:ndims) = 0d0
-							ic_sigma(i,1:ndims) = 0d0
-							
-							do j=1,ic_npt(i)
-								k=k+1
-								lPts(1:ndims) = ic_climits(i,1:ndims,1)+(ic_climits(i,1:ndims,2)-ic_climits(i,1:ndims,1))*p(1:ndims,k)
-								if( prior_warning .and. mod(ff,50)== 0 ) then
-									ic_mean(i,1:ndims) = ic_mean(i,1:ndims) + lPts(1:ndims)
-									ic_sigma(i,1:ndims) = ic_sigma(i,1:ndims) + lPts(1:ndims) * lPts(1:ndims)
-								endif
-							enddo
-							
-							ic_mean(i,1:ndims) = ic_mean(i,1:ndims) / dble(ic_npt(i))
-							ic_sigma(i,1:ndims) = sqrt(max(0d0, ic_sigma(i,1:ndims) / dble(ic_npt(i)) + ic_mean(i,1:ndims) * ic_mean(i,1:ndims)))
-							
-							do j = 1, ndims
-								if( ic_sigma(i,j) <= 0.05 .and. ( ic_sigma(i,j) <= 0.05 .or. ic_sigma(i,j) >= 0.95 ) ) then
-									if( .not. flag ) then
-										write(*,*)
-										write(*,*)"MultiNest Warning!"
-										flag = .true.
-									endif
-									write(*,*)"Parameter ", j, " of mode ", i, " is converging towards the edge of the prior."
-								endif
-							enddo
-						enddo
-					endif
+!					if( .not.ic_done(0) .and. prior_warning .and. mod(ff,50)== 0 ) then
+!						flag = .false.
+!						k=0
+!						do i=1,ic_n
+!							if( ic_npt(i) == 0 .or. ic_done(i) ) cycle
+!								
+!							ic_mean(i,1:ndims) = 0d0
+!							ic_sigma(i,1:ndims) = 0d0
+!							
+!							do j=1,ic_npt(i)
+!								k=k+1
+!								lPts(1:ndims) = ic_climits(i,1:ndims,1)+(ic_climits(i,1:ndims,2)-ic_climits(i,1:ndims,1))*p(1:ndims,k)
+!								if( prior_warning .and. mod(ff,50)== 0 ) then
+!									ic_mean(i,1:ndims) = ic_mean(i,1:ndims) + lPts(1:ndims)
+!									ic_sigma(i,1:ndims) = ic_sigma(i,1:ndims) + lPts(1:ndims) * lPts(1:ndims)
+!								endif
+!							enddo
+!							
+!							ic_mean(i,1:ndims) = ic_mean(i,1:ndims) / dble(ic_npt(i))
+!							ic_sigma(i,1:ndims) = sqrt(max(0d0, ic_sigma(i,1:ndims) / dble(ic_npt(i)) + ic_mean(i,1:ndims) * ic_mean(i,1:ndims)))
+!							
+!							do j = 1, ndims
+!								if( ic_sigma(i,j) <= 0.05 .and. ( ic_sigma(i,j) <= 0.05 .or. ic_sigma(i,j) >= 0.95 ) ) then
+!									if( .not. flag ) then
+!										write(*,*)
+!										write(*,*)"MultiNest Warning!"
+!										flag = .true.
+!									endif
+!									write(*,*)"Parameter ", j, " of mode ", i, " is converging towards the edge of the prior."
+!								endif
+!							enddo
+!						enddo
+!					endif
 					
 					if(mod(sff,updInt*10)==0 .or. ic_done(0)) call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar, &
 					multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n),ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n), &
