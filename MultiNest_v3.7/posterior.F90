@@ -19,7 +19,7 @@ contains
 !------------------------------------------------------------------------
       
  subroutine pos_samp(Ztol,nIter,root,nLpt,ndim,nCdim,nPar,multimodal,outfile,globZ,globinfo,ic_n,ic_Z,ic_info,ic_reme, &
- ic_vnow,ic_npt,ic_nBrnch,ic_brnch,phyP,l,evDataAll,IS,IS_Z,dumper,context,ending)
+ ic_vnow,ic_npt,ic_nBrnch,ic_brnch,phyP,l,evDataAll,IS,IS_Z,dumper,context,MAPfback,ending)
  !subroutine pos_samp
   	implicit none
   	
@@ -46,6 +46,7 @@ contains
       	double precision ltmp(nPar+2),ic_zloc(ic_n),ic_infoloc(ic_n),gzloc,ginfoloc
 	integer phyID(nLpt)
 	integer context
+	logical MAPfback !feedback on current MAP parameters?
 	logical ending !is this the final call to pos_samp?
       
       	!posterior info
@@ -367,7 +368,7 @@ contains
 	! call the dumper
 	INSlogZ = logZ
 	if( IS ) INSlogZ = IS_Z(1)
-	call dumper(nSamples, nLpt, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context, ending)
+	if(MAPfback) call dumper(nSamples, nLpt, nPar, physLive, posterior, paramConstr, maxLogLike, logZ, INSlogZ, logZerr, context, ending)
 
       	deallocate(branchp,evdatp,wt)
       	deallocate(nbranchp,nPtPerNode)

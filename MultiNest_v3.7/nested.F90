@@ -31,7 +31,7 @@ module Nested
   integer numlike,globff
   double precision logZero
   integer maxIter
-  logical fback,lplot,resumeFlag,dlive,genLive,dino
+  logical fback,MAPfback,lplot,resumeFlag,dlive,genLive,dino
   !output files name
   character(LEN=100)physname,broot,rname,resumename,livename,evname,IS_Files(3)
   !output file units
@@ -48,14 +48,14 @@ module Nested
 contains
   
   subroutine nestRun(nest_IS,nest_mmodal,nest_ceff,nest_nlive,nest_tol,nest_ef,nest_ndims,nest_totPar,nest_nCdims,maxClst, &
-  nest_updInt,nest_Ztol,nest_root,seed,nest_pWrap,nest_fb,nest_liveplot,nest_resume,nest_outfile,initMPI,nest_logZero,nest_maxIter, &
-  loglike,dumper,live_plot,context)
+  nest_updInt,nest_Ztol,nest_root,seed,nest_pWrap,nest_fb,nest_MAPfb,nest_liveplot,nest_resume,nest_outfile,initMPI, &
+  nest_logZero,nest_maxIter,loglike,dumper,live_plot,context)
         
   	implicit none
         
 	integer nest_ndims,nest_nlive,nest_updInt,context,seed,i
 	integer maxClst,nest_nsc,nest_totPar,nest_nCdims,nest_pWrap(*),nest_maxIter
-	logical nest_IS,nest_mmodal,nest_fb,nest_liveplot,nest_resume,nest_ceff,nest_outfile,initMPI
+	logical nest_IS,nest_mmodal,nest_fb,nest_MAPfb,nest_liveplot,nest_resume,nest_ceff,nest_outfile,initMPI
 	character(LEN=100) nest_root
 	double precision nest_tol,nest_ef,nest_Ztol,nest_logZero
 	
@@ -137,6 +137,7 @@ contains
       		broot=nest_root
       		rname = trim(broot)
       		fback = nest_fb
+      		MAPfback = nest_MAPfb
       		lplot = nest_liveplot
 		
       		!output file info
@@ -1157,7 +1158,7 @@ contains
 				
 				call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar,multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n), &
 				ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n),ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive), &
-				l(1:nlive),evDataAll,IS,IS_Z,dumper,context,.true.)
+				l(1:nlive),evDataAll,IS,IS_Z,dumper,context,MAPfback,.true.)
 				
 				!if done then add in the contribution to the global evidence from live points
 				j=0
@@ -2536,7 +2537,7 @@ contains
 					
 					if(mod(sff,updInt*10)==0 .or. ic_done(0)) call pos_samp(Ztol,globff,broot,nlive,ndims,nCdims,totPar, &
 					multimodal,outfile,gZ,ginfo,ic_n,ic_Z(1:ic_n),ic_info(1:ic_n),ic_reme(1:ic_n),ic_vnow(1:ic_n),ic_npt(1:ic_n), &
-					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context,nest_ended)
+					ic_nBrnch(1:ic_n),ic_brnch(1:ic_n,:,1),phyP(:,1:nlive),l(1:nlive),evDataAll,IS,IS_Z,dumper,context,MAPfback,nest_ended)
 				endif
 			endif
 			
