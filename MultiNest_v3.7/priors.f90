@@ -25,11 +25,12 @@ end function DeltaFunctionPrior
 !=======================================================================
 ! Uniform[0:1]  ->  Uniform[x1:x2]
 
-function UniformPrior(r,x1,x2)
+elemental function UniformPrior(r,x1,x2)
 
             implicit none
 
-            double precision r,x1,x2,UniformPrior
+            double precision, intent(in) :: r,x1,x2
+            double precision UniformPrior
 
             UniformPrior=x1+r*(x2-x1)
 
