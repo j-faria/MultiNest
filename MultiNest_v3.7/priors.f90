@@ -77,7 +77,11 @@ function JeffreysPrior(r, x1, x2)
 
             double precision r,x1,x2,JeffreysPrior
 
-            JeffreysPrior=x1*(x2/x1)**r
+            if (r.le.0.0d0) then
+                JeffreysPrior=-1.0d32
+            else
+                JeffreysPrior=x1*(x2/x1)**r
+            end if
             
 end function JeffreysPrior
 
